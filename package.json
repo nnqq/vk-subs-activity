@@ -1,0 +1,36 @@
+{
+  "name": "vk-subs-activity",
+  "version": "0.1.0",
+  "description": "count activity of vk group subscribers",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha",
+    "eslint": "eslint . --fix --ignore-pattern node_modules/"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nnqq/vk-subs-activity.git"
+  },
+  "keywords": [
+    "vk",
+    "api",
+    "vkontakte",
+    "vk-api",
+    "vk-app",
+    "vkontakte-api",
+    "vkapi"
+  ],
+  "author": "nnqq",
+  "license": "MIT",
+  "homepage": "https://github.com/nnqq/vk-subs-activity",
+  "dependencies": {
+    "node-fetch": "^2.3.0"
+  },
+  "devDependencies": {
+    "chai": "^4.2.0",
+    "eslint": "^5.12.0",
+    "eslint-config-airbnb-base": "^13.1.0",
+    "eslint-plugin-import": "^2.14.0",
+    "mocha": "^5.2.0"
+  }
+}

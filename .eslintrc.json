@@ -1,0 +1,7 @@
+{
+  "extends": "airbnb-base",
+  "rules": {
+    "no-await-in-loop": "off",
+    "no-param-reassign": "off"
+  }
+}
