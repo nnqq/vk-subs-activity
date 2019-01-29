@@ -37,7 +37,7 @@ npm test
 ### Methods
 
 * [constructor(settings)](#constructorsettings)
-* [.startAutoUpdate(settings)](#startutoupdatesettings)
+* [.startAutoUpdate(settings)](#startautoupdatesettings)
 * [.stopAutoUpdate()](#stopautoupdate)
 * [.getList(settings)](#getlistsettings)
 * [.updateList(settings)](#updatelistsettings)
