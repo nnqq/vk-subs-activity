@@ -1,8 +1,8 @@
 const vkApi = require('./lib/vkApi');
 
 function updateSubProfile(ctx, id, firstName, lastName, event, totalPosts = null, count = 1) {
-  if (!ctx.subsStats[`${id}`]) {
-    ctx.subsStats[`${id}`] = {
+  if (!ctx.hotSubsStats[`${id}`]) {
+    ctx.hotSubsStats[`${id}`] = {
       firstName,
       lastName,
       usualLikes: 0,
@@ -25,44 +25,44 @@ function updateSubProfile(ctx, id, firstName, lastName, event, totalPosts = null
   switch (event) {
     case 'usualLike':
       if (noAdminLikes) return;
-      ctx.subsStats[`${id}`].usualLikes += count;
-      ctx.subsStats[`${id}`].totalLikes += count;
-      if (ctx.subsStats[`${id}`].totalLikes === totalPosts) {
-        ctx.subsStats[`${id}`].likedAllPosts = true;
-        ctx.subsStats[`${id}`].points += ctx.likes.valueOfLikedAllPosts;
+      ctx.hotSubsStats[`${id}`].usualLikes += count;
+      ctx.hotSubsStats[`${id}`].totalLikes += count;
+      if (ctx.hotSubsStats[`${id}`].totalLikes === totalPosts) {
+        ctx.hotSubsStats[`${id}`].likedAllPosts = true;
+        ctx.hotSubsStats[`${id}`].points += ctx.likes.valueOfLikedAllPosts;
       }
-      ctx.subsStats[`${id}`].points += ctx.likes.valueOfUsual * count;
+      ctx.hotSubsStats[`${id}`].points += ctx.likes.valueOfUsual * count;
       break;
 
     case 'topLike':
       if (noAdminLikes) return;
-      ctx.subsStats[`${id}`].topLikes += count;
-      ctx.subsStats[`${id}`].totalLikes += count;
-      if (ctx.subsStats[`${id}`].totalLikes === totalPosts) {
-        ctx.subsStats[`${id}`].likedAllPosts = true;
-        ctx.subsStats[`${id}`].points += ctx.likes.valueOfLikedAllPosts;
+      ctx.hotSubsStats[`${id}`].topLikes += count;
+      ctx.hotSubsStats[`${id}`].totalLikes += count;
+      if (ctx.hotSubsStats[`${id}`].totalLikes === totalPosts) {
+        ctx.hotSubsStats[`${id}`].likedAllPosts = true;
+        ctx.hotSubsStats[`${id}`].points += ctx.likes.valueOfLikedAllPosts;
       }
-      ctx.subsStats[`${id}`].points += ctx.likes.valueOfTop * count;
+      ctx.hotSubsStats[`${id}`].points += ctx.likes.valueOfTop * count;
       break;
 
     case 'usualComment':
       if (noAdminComments) return;
-      ctx.subsStats[`${id}`].usualComments += count;
-      ctx.subsStats[`${id}`].totalComments += count;
-      ctx.subsStats[`${id}`].points += ctx.comments.valueOfUsual * count;
+      ctx.hotSubsStats[`${id}`].usualComments += count;
+      ctx.hotSubsStats[`${id}`].totalComments += count;
+      ctx.hotSubsStats[`${id}`].points += ctx.comments.valueOfUsual * count;
       break;
 
     case 'topComment':
       if (noAdminComments) return;
-      ctx.subsStats[`${id}`].topComments += count;
-      ctx.subsStats[`${id}`].totalComments += count;
-      ctx.subsStats[`${id}`].points += ctx.comments.valueOfTop * count;
+      ctx.hotSubsStats[`${id}`].topComments += count;
+      ctx.hotSubsStats[`${id}`].totalComments += count;
+      ctx.hotSubsStats[`${id}`].points += ctx.comments.valueOfTop * count;
       break;
 
     case 'commentLikeFromOther':
       if (noAdminComments) return;
-      ctx.subsStats[`${id}`].commentsLikesFromOthers += count;
-      ctx.subsStats[`${id}`].points += ctx.comments.valueOfLikesFromOthers * count;
+      ctx.hotSubsStats[`${id}`].commentsLikesFromOthers += count;
+      ctx.hotSubsStats[`${id}`].points += ctx.comments.valueOfLikesFromOthers * count;
       break;
 
     default:
@@ -291,7 +291,8 @@ class VkSubsActivity {
 
     this.autoUpdateTimerId = null;
 
-    this.subsStats = {};
+    this.hotSubsStats = {};
+    this.coldSubsStats = {};
   }
 
   async updateList(settings = {}) {
@@ -312,7 +313,10 @@ class VkSubsActivity {
       updateListRequests.push(getComments(this, post.id));
     });
 
-    return Promise.all(updateListRequests);
+    return Promise.all(updateListRequests)
+      .then(() => {
+        this.coldSubsStats = JSON.parse(JSON.stringify(this.hotSubsStats));
+      });
   }
 
   getList(settings = {}) {
@@ -330,7 +334,7 @@ class VkSubsActivity {
       sortDirection,
     } = Object.assign({}, defaultSettingsGetList, settings);
 
-    const list = Object.keys(this.subsStats).map((sub) => {
+    const list = Object.keys(this.coldSubsStats).map((sub) => {
       const {
         firstName,
         lastName,
@@ -344,7 +348,7 @@ class VkSubsActivity {
         likedAllPosts,
         points,
         place,
-      } = this.subsStats[sub];
+      } = this.coldSubsStats[sub];
 
       return {
         id: +sub,
@@ -400,7 +404,7 @@ class VkSubsActivity {
   }
 
   clearList() {
-    this.subsStats = {};
+    this.hotSubsStats = {};
   }
 
   async startAutoUpdate(settings = {}) {

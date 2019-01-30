@@ -16,7 +16,7 @@ const fixtureProfilesArr = require('./fixtures/findFullNameById');
 const fixtureLikesData = require('./fixtures/countLikes');
 const fixtureCommentsData = require('./fixtures/countComments');
 const fixtureList = require('./fixtures/searchInList');
-const fixtureSubsStats = require('./fixtures/getList');
+const fixtureHotSubsStats = require('./fixtures/getList');
 
 describe('index.js', () => {
   let vkSubsActivity;
@@ -64,7 +64,7 @@ describe('index.js', () => {
           place: 0,
         },
       };
-      vkSubsActivity.subsStats.should.eql(result);
+      vkSubsActivity.hotSubsStats.should.eql(result);
     });
 
     it('should count topLike properly', () => {
@@ -85,7 +85,7 @@ describe('index.js', () => {
           place: 0,
         },
       };
-      vkSubsActivity.subsStats.should.eql(result);
+      vkSubsActivity.hotSubsStats.should.eql(result);
     });
 
     it('should count usualComment properly', () => {
@@ -106,7 +106,7 @@ describe('index.js', () => {
           place: 0,
         },
       };
-      vkSubsActivity.subsStats.should.eql(result);
+      vkSubsActivity.hotSubsStats.should.eql(result);
     });
 
     it('should count topComment properly', () => {
@@ -127,7 +127,7 @@ describe('index.js', () => {
           place: 0,
         },
       };
-      vkSubsActivity.subsStats.should.eql(result);
+      vkSubsActivity.hotSubsStats.should.eql(result);
     });
 
     it('should count commentLikeFromOther properly', () => {
@@ -148,7 +148,7 @@ describe('index.js', () => {
           place: 0,
         },
       };
-      vkSubsActivity.subsStats.should.eql(result);
+      vkSubsActivity.hotSubsStats.should.eql(result);
     });
 
     it('should count points and set likedAllPosts to true if totalLikes === totalPosts', () => {
@@ -169,7 +169,7 @@ describe('index.js', () => {
           place: 0,
         },
       };
-      vkSubsActivity.subsStats.should.eql(result);
+      vkSubsActivity.hotSubsStats.should.eql(result);
     });
 
     it('should work properly in complex', () => {
@@ -199,7 +199,7 @@ describe('index.js', () => {
           place: 0,
         },
       };
-      vkSubsActivity.subsStats.should.eql(result);
+      vkSubsActivity.hotSubsStats.should.eql(result);
     });
   });
 
@@ -490,7 +490,7 @@ describe('index.js', () => {
   });
 
   describe('countLikes', () => {
-    it('should count likes and write data to subsStats properly', () => {
+    it('should count likes and write data to hotSubsStats properly', () => {
       countLikes(vkSubsActivity, fixtureLikesData, 10);
       const result = {
         '239518807': {
@@ -564,12 +564,12 @@ describe('index.js', () => {
           usualLikes: 0,
         },
       };
-      vkSubsActivity.subsStats.should.eql(result);
+      vkSubsActivity.hotSubsStats.should.eql(result);
     });
   });
 
   describe('countComments', () => {
-    it('should count comments and write data to subsStats properly ', () => {
+    it('should count comments and write data to hotSubsStats properly ', () => {
       countComments(vkSubsActivity, fixtureCommentsData);
       const result = {
         '100': {
@@ -615,7 +615,7 @@ describe('index.js', () => {
           usualLikes: 0,
         },
       };
-      vkSubsActivity.subsStats.should.eql(result);
+      vkSubsActivity.hotSubsStats.should.eql(result);
     });
   });
 
@@ -722,8 +722,8 @@ describe('index.js', () => {
   });
 
   describe('VkSubsActivity.getList', () => {
-    it('should return transformed "subsStats" consider to "settings" (1)', () => {
-      vkSubsActivity.subsStats = fixtureSubsStats;
+    it('should return transformed "hotSubsStats" consider to "settings" (1)', () => {
+      vkSubsActivity.coldSubsStats = fixtureHotSubsStats;
       const data = vkSubsActivity.getList({
         count: 0,
         plain: false,
@@ -808,8 +808,8 @@ describe('index.js', () => {
       data.should.eql(result);
     });
 
-    it('should return transformed "subsStats" consider to "settings" (2)', () => {
-      vkSubsActivity.subsStats = fixtureSubsStats;
+    it('should return transformed "hotSubsStats" consider to "settings" (2)', () => {
+      vkSubsActivity.coldSubsStats = fixtureHotSubsStats;
       const data = vkSubsActivity.getList({
         count: 3,
         plain: true,
@@ -823,8 +823,8 @@ describe('index.js', () => {
       data.should.equal(result);
     });
 
-    it('should return transformed "subsStats" consider to "settings" (3)', () => {
-      vkSubsActivity.subsStats = fixtureSubsStats;
+    it('should return transformed "hotSubsStats" consider to "settings" (3)', () => {
+      vkSubsActivity.coldSubsStats = fixtureHotSubsStats;
       const data = vkSubsActivity.getList({
         count: 0,
         plain: true,
@@ -842,10 +842,10 @@ describe('index.js', () => {
   });
 
   describe('VkSubsActivity.clearList', () => {
-    it('should clear subsStats', () => {
-      vkSubsActivity.subsStats = fixtureSubsStats;
+    it('should clear hotSubsStats', () => {
+      vkSubsActivity.hotSubsStats = fixtureHotSubsStats;
       vkSubsActivity.clearList();
-      vkSubsActivity.subsStats.should.eql({});
+      vkSubsActivity.hotSubsStats.should.eql({});
     });
   });
 });
