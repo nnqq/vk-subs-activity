@@ -1,6 +1,6 @@
 {
   "name": "vk-subs-activity",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "count activity of vk group subscribers",
   "main": "index.js",
   "scripts": {
