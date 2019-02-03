@@ -315,7 +315,7 @@ class VkSubsActivity {
 
     return Promise.all(updateListRequests)
       .then(() => {
-        this.coldSubsStats = JSON.parse(JSON.stringify(this.hotSubsStats));
+        this.coldSubsStats = { ...this.hotSubsStats };
       });
   }
 
