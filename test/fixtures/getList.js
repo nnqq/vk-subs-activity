@@ -1,5 +1,6 @@
-module.exports = {
-  '426632942': {
+module.exports = [
+  {
+    id: 426632942,
     firstName: 'Валерий',
     lastName: 'Вальтер',
     usualLikes: 0,
@@ -11,9 +12,10 @@ module.exports = {
     commentsLikesFromOthers: 9,
     likedAllPosts: false,
     points: 61,
-    place: 0,
+    place: 1,
   },
-  '370493282': {
+  {
+    id: 370493282,
     firstName: 'Rufat',
     lastName: 'Drobovilov',
     usualLikes: 6,
@@ -25,9 +27,10 @@ module.exports = {
     commentsLikesFromOthers: 7,
     likedAllPosts: false,
     points: 45,
-    place: 0,
+    place: 2,
   },
-  '1524150': {
+  {
+    id: 1524150,
     firstName: 'Павел',
     lastName: 'Овчинников',
     usualLikes: 0,
@@ -39,9 +42,10 @@ module.exports = {
     commentsLikesFromOthers: 8,
     likedAllPosts: false,
     points: 44,
-    place: 0,
+    place: 3,
   },
-  '475455807': {
+  {
+    id: 475455807,
     firstName: 'Karina',
     lastName: 'Mirzoeva',
     usualLikes: 1,
@@ -53,9 +57,10 @@ module.exports = {
     commentsLikesFromOthers: 7,
     likedAllPosts: false,
     points: 39,
-    place: 0,
+    place: 4,
   },
-  '522058664': {
+  {
+    id: 522058664,
     firstName: 'Селима',
     lastName: 'Кшановичус',
     usualLikes: 2,
@@ -67,6 +72,6 @@ module.exports = {
     commentsLikesFromOthers: 5,
     likedAllPosts: false,
     points: 38,
-    place: 0,
+    place: 5,
   },
-};
+];

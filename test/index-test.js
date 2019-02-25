@@ -1,22 +1,14 @@
 const { describe, it } = require('mocha');
 const should = require('chai').should();
 
-const {
-  updateSubProfile,
-  cutPostsInInterval,
-  findFullNameById,
-  countLikes,
-  countComments,
-  searchInList,
-  VkSubsActivity,
-} = require('../index');
+const VkSubsActivity = require('../index');
 
 const fixtureGroupWallArr = require('./fixtures/cutPostsInInterval');
 const fixtureProfilesArr = require('./fixtures/findFullNameById');
 const fixtureLikesData = require('./fixtures/countLikes');
 const fixtureCommentsData = require('./fixtures/countComments');
 const fixtureList = require('./fixtures/searchInList');
-const fixtureHotSubsStats = require('./fixtures/getList');
+const fixtureColdSubsStats = require('./fixtures/getList');
 
 describe('index.js', () => {
   let vkSubsActivity;
@@ -45,9 +37,9 @@ describe('index.js', () => {
     });
   });
 
-  describe('updateSubProfile', () => {
+  describe('_updateSubProfile', () => {
     it('should count usualLike properly', () => {
-      updateSubProfile(vkSubsActivity, 123123, 'Ivan', 'Ivanov', 'usualLike');
+      vkSubsActivity._updateSubProfile(123123, 'Ivan', 'Ivanov', 'usualLike');
       const result = {
         '123123': {
           firstName: 'Ivan',
@@ -64,11 +56,11 @@ describe('index.js', () => {
           place: 0,
         },
       };
-      vkSubsActivity.hotSubsStats.should.eql(result);
+      vkSubsActivity._hotSubsStats.should.eql(result);
     });
 
     it('should count topLike properly', () => {
-      updateSubProfile(vkSubsActivity, 123123, 'Ivan', 'Ivanov', 'topLike');
+      vkSubsActivity._updateSubProfile(123123, 'Ivan', 'Ivanov', 'topLike');
       const result = {
         '123123': {
           firstName: 'Ivan',
@@ -85,11 +77,11 @@ describe('index.js', () => {
           place: 0,
         },
       };
-      vkSubsActivity.hotSubsStats.should.eql(result);
+      vkSubsActivity._hotSubsStats.should.eql(result);
     });
 
     it('should count usualComment properly', () => {
-      updateSubProfile(vkSubsActivity, 123123, 'Ivan', 'Ivanov', 'usualComment');
+      vkSubsActivity._updateSubProfile(123123, 'Ivan', 'Ivanov', 'usualComment');
       const result = {
         '123123': {
           firstName: 'Ivan',
@@ -106,11 +98,11 @@ describe('index.js', () => {
           place: 0,
         },
       };
-      vkSubsActivity.hotSubsStats.should.eql(result);
+      vkSubsActivity._hotSubsStats.should.eql(result);
     });
 
     it('should count topComment properly', () => {
-      updateSubProfile(vkSubsActivity, 123123, 'Ivan', 'Ivanov', 'topComment');
+      vkSubsActivity._updateSubProfile(123123, 'Ivan', 'Ivanov', 'topComment');
       const result = {
         '123123': {
           firstName: 'Ivan',
@@ -127,11 +119,11 @@ describe('index.js', () => {
           place: 0,
         },
       };
-      vkSubsActivity.hotSubsStats.should.eql(result);
+      vkSubsActivity._hotSubsStats.should.eql(result);
     });
 
     it('should count commentLikeFromOther properly', () => {
-      updateSubProfile(vkSubsActivity, 123123, 'Ivan', 'Ivanov', 'commentLikeFromOther');
+      vkSubsActivity._updateSubProfile(123123, 'Ivan', 'Ivanov', 'commentLikeFromOther');
       const result = {
         '123123': {
           firstName: 'Ivan',
@@ -148,11 +140,11 @@ describe('index.js', () => {
           place: 0,
         },
       };
-      vkSubsActivity.hotSubsStats.should.eql(result);
+      vkSubsActivity._hotSubsStats.should.eql(result);
     });
 
     it('should count points and set likedAllPosts to true if totalLikes === totalPosts', () => {
-      updateSubProfile(vkSubsActivity, 123123, 'Ivan', 'Ivanov', 'usualLike', 1);
+      vkSubsActivity._updateSubProfile(123123, 'Ivan', 'Ivanov', 'usualLike', 1);
       const result = {
         '123123': {
           firstName: 'Ivan',
@@ -169,20 +161,20 @@ describe('index.js', () => {
           place: 0,
         },
       };
-      vkSubsActivity.hotSubsStats.should.eql(result);
+      vkSubsActivity._hotSubsStats.should.eql(result);
     });
 
     it('should work properly in complex', () => {
-      updateSubProfile(vkSubsActivity, 123123, 'Ivan', 'Ivanov', 'usualLike', 3);
-      updateSubProfile(vkSubsActivity, 123123, 'Ivan', 'Ivanov', 'usualLike', 3);
-      updateSubProfile(vkSubsActivity, 123123, 'Ivan', 'Ivanov', 'topLike', 3);
-      updateSubProfile(vkSubsActivity, 123123, 'Ivan', 'Ivanov', 'topLike', 3);
-      updateSubProfile(vkSubsActivity, 123123, 'Ivan', 'Ivanov', 'usualComment', 3);
-      updateSubProfile(vkSubsActivity, 123123, 'Ivan', 'Ivanov', 'usualComment', 3);
-      updateSubProfile(vkSubsActivity, 123123, 'Ivan', 'Ivanov', 'topComment', 3);
-      updateSubProfile(vkSubsActivity, 123123, 'Ivan', 'Ivanov', 'topComment', 3);
-      updateSubProfile(vkSubsActivity, 123123, 'Ivan', 'Ivanov', 'commentLikeFromOther', 3, 5);
-      updateSubProfile(vkSubsActivity, 123123, 'Ivan', 'Ivanov', 'commentLikeFromOther', 3, 10);
+      vkSubsActivity._updateSubProfile(123123, 'Ivan', 'Ivanov', 'usualLike', 3);
+      vkSubsActivity._updateSubProfile(123123, 'Ivan', 'Ivanov', 'usualLike', 3);
+      vkSubsActivity._updateSubProfile(123123, 'Ivan', 'Ivanov', 'topLike', 3);
+      vkSubsActivity._updateSubProfile(123123, 'Ivan', 'Ivanov', 'topLike', 3);
+      vkSubsActivity._updateSubProfile(123123, 'Ivan', 'Ivanov', 'usualComment', 3);
+      vkSubsActivity._updateSubProfile(123123, 'Ivan', 'Ivanov', 'usualComment', 3);
+      vkSubsActivity._updateSubProfile(123123, 'Ivan', 'Ivanov', 'topComment', 3);
+      vkSubsActivity._updateSubProfile(123123, 'Ivan', 'Ivanov', 'topComment', 3);
+      vkSubsActivity._updateSubProfile(123123, 'Ivan', 'Ivanov', 'commentLikeFromOther', 3, 5);
+      vkSubsActivity._updateSubProfile(123123, 'Ivan', 'Ivanov', 'commentLikeFromOther', 3, 10);
       const result = {
         '123123': {
           firstName: 'Ivan',
@@ -199,11 +191,11 @@ describe('index.js', () => {
           place: 0,
         },
       };
-      vkSubsActivity.hotSubsStats.should.eql(result);
+      vkSubsActivity._hotSubsStats.should.eql(result);
     });
   });
 
-  describe('cutPostsInInterval', () => {
+  describe('_cutPostsInInterval', () => {
     it('should return only posts in time interval', () => {
       const result = [{
         id: 140824,
@@ -475,23 +467,24 @@ describe('index.js', () => {
         },
         is_favorite: false,
       }];
-      cutPostsInInterval(fixtureGroupWallArr, 1548683254, 1548691692).should.eql(result);
+      VkSubsActivity._cutPostsInInterval(fixtureGroupWallArr, 1548683254, 1548691692).should
+        .eql(result);
     });
   });
 
-  describe('findFullNameById', () => {
+  describe('_findFullNameById', () => {
     it('should return object { firstName, lastName }', () => {
       const result = {
         firstName: 'Evgeny',
         lastName: 'Sidorin',
       };
-      findFullNameById(fixtureProfilesArr, 53153367).should.eql(result);
+      VkSubsActivity._findFullNameById(fixtureProfilesArr, 53153367).should.eql(result);
     });
   });
 
-  describe('countLikes', () => {
+  describe('_countLikes', () => {
     it('should count likes and write data to hotSubsStats properly', () => {
-      countLikes(vkSubsActivity, fixtureLikesData, 10);
+      vkSubsActivity._countLikes(fixtureLikesData, 10);
       const result = {
         '239518807': {
           commentsLikesFromOthers: 0,
@@ -564,13 +557,13 @@ describe('index.js', () => {
           usualLikes: 0,
         },
       };
-      vkSubsActivity.hotSubsStats.should.eql(result);
+      vkSubsActivity._hotSubsStats.should.eql(result);
     });
   });
 
-  describe('countComments', () => {
+  describe('_countComments', () => {
     it('should count comments and write data to hotSubsStats properly ', () => {
-      countComments(vkSubsActivity, fixtureCommentsData);
+      vkSubsActivity._countComments(fixtureCommentsData);
       const result = {
         '100': {
           commentsLikesFromOthers: 0,
@@ -615,13 +608,13 @@ describe('index.js', () => {
           usualLikes: 0,
         },
       };
-      vkSubsActivity.hotSubsStats.should.eql(result);
+      vkSubsActivity._hotSubsStats.should.eql(result);
     });
   });
 
-  describe('searchInList', () => {
+  describe('_searchInList', () => {
     it('should return filtered array with search params (1)', () => {
-      const data = searchInList(fixtureList, {
+      const data = VkSubsActivity._searchInList(fixtureList, {
         firstName: 'Павел',
       });
       const result = [
@@ -645,7 +638,7 @@ describe('index.js', () => {
     });
 
     it('should return filtered array with search params (2)', () => {
-      const data = searchInList(fixtureList, {
+      const data = VkSubsActivity._searchInList(fixtureList, {
         id: 475455807,
       });
       const result = [
@@ -669,7 +662,7 @@ describe('index.js', () => {
     });
 
     it('should return filtered array with search params (3)', () => {
-      const data = searchInList(fixtureList, {
+      const data = VkSubsActivity._searchInList(fixtureList, {
         topComments: 1,
       });
       const result = [{
@@ -721,9 +714,9 @@ describe('index.js', () => {
     });
   });
 
-  describe('VkSubsActivity.getList', () => {
-    it('should return transformed "hotSubsStats" consider to "settings" (1)', () => {
-      vkSubsActivity.coldSubsStats = fixtureHotSubsStats;
+  describe('getList', () => {
+    it('should return rating list consider to "settings" (1)', () => {
+      vkSubsActivity._coldSubsStats = fixtureColdSubsStats;
       const data = vkSubsActivity.getList({
         count: 0,
         plain: false,
@@ -808,8 +801,8 @@ describe('index.js', () => {
       data.should.eql(result);
     });
 
-    it('should return transformed "hotSubsStats" consider to "settings" (2)', () => {
-      vkSubsActivity.coldSubsStats = fixtureHotSubsStats;
+    it('should return rating list consider to "settings" (2)', () => {
+      vkSubsActivity._coldSubsStats = fixtureColdSubsStats;
       const data = vkSubsActivity.getList({
         count: 3,
         plain: true,
@@ -823,8 +816,8 @@ describe('index.js', () => {
       data.should.equal(result);
     });
 
-    it('should return transformed "hotSubsStats" consider to "settings" (3)', () => {
-      vkSubsActivity.coldSubsStats = fixtureHotSubsStats;
+    it('should return rating list consider to "settings" (3)', () => {
+      vkSubsActivity._coldSubsStats = fixtureColdSubsStats;
       const data = vkSubsActivity.getList({
         count: 0,
         plain: true,
@@ -841,11 +834,11 @@ describe('index.js', () => {
     });
   });
 
-  describe('VkSubsActivity.clearList', () => {
+  describe('clearList', () => {
     it('should clear hotSubsStats', () => {
-      vkSubsActivity.hotSubsStats = fixtureHotSubsStats;
+      vkSubsActivity._hotSubsStats = { test: 'data' };
       vkSubsActivity.clearList();
-      vkSubsActivity.hotSubsStats.should.eql({});
+      vkSubsActivity._hotSubsStats.should.eql({});
     });
   });
 });

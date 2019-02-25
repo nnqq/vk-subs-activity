@@ -1,262 +1,5 @@
 const vkApi = require('./lib/vkApi');
 
-function updateSubProfile(ctx, id, firstName, lastName, event, totalPosts = null, count = 1) {
-  if (!ctx.hotSubsStats[`${id}`]) {
-    ctx.hotSubsStats[`${id}`] = {
-      firstName,
-      lastName,
-      usualLikes: 0,
-      topLikes: 0,
-      totalLikes: 0,
-      usualComments: 0,
-      topComments: 0,
-      totalComments: 0,
-      commentsLikesFromOthers: 0,
-      likedAllPosts: false,
-      points: 0,
-      place: 0,
-    };
-  }
-
-  const noAdminLikes = ctx.adminsIds.includes(id) && ctx.likes.ignoreAdmins;
-
-  const noAdminComments = ctx.adminsIds.includes(id) && ctx.comments.ignoreAdmins;
-
-  switch (event) {
-    case 'usualLike':
-      if (noAdminLikes) return;
-      ctx.hotSubsStats[`${id}`].usualLikes += count;
-      ctx.hotSubsStats[`${id}`].totalLikes += count;
-      if (ctx.hotSubsStats[`${id}`].totalLikes === totalPosts) {
-        ctx.hotSubsStats[`${id}`].likedAllPosts = true;
-        ctx.hotSubsStats[`${id}`].points += ctx.likes.valueOfLikedAllPosts;
-      }
-      ctx.hotSubsStats[`${id}`].points += ctx.likes.valueOfUsual * count;
-      break;
-
-    case 'topLike':
-      if (noAdminLikes) return;
-      ctx.hotSubsStats[`${id}`].topLikes += count;
-      ctx.hotSubsStats[`${id}`].totalLikes += count;
-      if (ctx.hotSubsStats[`${id}`].totalLikes === totalPosts) {
-        ctx.hotSubsStats[`${id}`].likedAllPosts = true;
-        ctx.hotSubsStats[`${id}`].points += ctx.likes.valueOfLikedAllPosts;
-      }
-      ctx.hotSubsStats[`${id}`].points += ctx.likes.valueOfTop * count;
-      break;
-
-    case 'usualComment':
-      if (noAdminComments) return;
-      ctx.hotSubsStats[`${id}`].usualComments += count;
-      ctx.hotSubsStats[`${id}`].totalComments += count;
-      ctx.hotSubsStats[`${id}`].points += ctx.comments.valueOfUsual * count;
-      break;
-
-    case 'topComment':
-      if (noAdminComments) return;
-      ctx.hotSubsStats[`${id}`].topComments += count;
-      ctx.hotSubsStats[`${id}`].totalComments += count;
-      ctx.hotSubsStats[`${id}`].points += ctx.comments.valueOfTop * count;
-      break;
-
-    case 'commentLikeFromOther':
-      if (noAdminComments) return;
-      ctx.hotSubsStats[`${id}`].commentsLikesFromOthers += count;
-      ctx.hotSubsStats[`${id}`].points += ctx.comments.valueOfLikesFromOthers * count;
-      break;
-
-    default:
-      throw new Error('No sub event specified!');
-  }
-}
-
-function cutPostsInInterval(groupWallArr, fromDate, toDate) {
-  return groupWallArr.filter(post => post.date > fromDate && post.date < toDate);
-}
-
-function findFullNameById(profilesArr, id) {
-  for (let i = 0; i < profilesArr.length; i += 1) {
-    if (profilesArr[i].id === id) {
-      return {
-        firstName: profilesArr[i].first_name,
-        lastName: profilesArr[i].last_name,
-      };
-    }
-  }
-
-  return false;
-}
-
-async function getGroupWall(ctx, fromDate) {
-  const { token, groupId, lang } = ctx;
-
-  const first100WallItems = await vkApi('wall.get', {
-    lang,
-    access_token: token,
-    owner_id: -groupId,
-    count: 100,
-  });
-
-  const groupWall = [];
-  groupWall.push(first100WallItems);
-
-  let j = 0;
-  while (groupWall[groupWall.length - 1].response.items[groupWall[groupWall.length - 1].response
-    .items.length - 1].date > fromDate) {
-    j += 1;
-
-    const groupWallChunk = await vkApi('wall.get', {
-      lang,
-      access_token: token,
-      owner_id: -groupId,
-      count: 100,
-      offset: 100 * j,
-    });
-
-    groupWall.push(groupWallChunk);
-  }
-
-  const posts = [];
-  groupWall.forEach((item) => {
-    item.response.items.forEach((post) => {
-      posts.push(post);
-    });
-  });
-
-  return posts;
-}
-
-function countLikes(ctx, likesData, totalPosts) {
-  likesData.response.items.forEach((likeItem, i) => {
-    if (i < ctx.likes.countOfFirstAreTop) {
-      updateSubProfile(ctx, likeItem.id, likeItem.first_name, likeItem.last_name, 'topLike',
-        totalPosts);
-    } else {
-      updateSubProfile(ctx, likeItem.id, likeItem.first_name, likeItem.last_name, 'usualLike',
-        totalPosts);
-    }
-  });
-}
-
-async function getLikes(ctx, postId, totalPosts) {
-  const { token, groupId, lang } = ctx;
-
-  const likesData = await vkApi('likes.getList', {
-    lang,
-    access_token: token,
-    type: 'post',
-    owner_id: -groupId,
-    item_id: postId,
-    filter: 'likes',
-    extended: 1,
-    count: 1000,
-  });
-
-  let withRestLikes;
-
-  if (likesData.response.count > 1000) {
-    const requests = [];
-
-    for (let i = 1; i < Math.ceil(likesData.response.count / 1000); i += 1) {
-      requests.push(vkApi('likes.getList', {
-        lang,
-        access_token: token,
-        type: 'post',
-        owner_id: -groupId,
-        item_id: postId,
-        filter: 'likes',
-        extended: 1,
-        count: 1000,
-        offset: 1000 * i,
-      }));
-    }
-
-    withRestLikes = await Promise.all(requests);
-
-    withRestLikes.unshift(likesData);
-  }
-
-  if (withRestLikes) {
-    withRestLikes.forEach((likesListItem) => {
-      countLikes(ctx, likesListItem, totalPosts);
-    });
-  } else {
-    countLikes(ctx, likesData, totalPosts);
-  }
-}
-
-function countComments(ctx, commentsData) {
-  commentsData.response.items.forEach((commentItem, i) => {
-    if (commentItem.text.length < ctx.comments.ignoreShorterThan) return;
-
-    const userId = commentItem.from_id;
-    const { firstName, lastName } = findFullNameById(commentsData.response.profiles, userId);
-    const likesCount = commentItem.likes.count;
-
-    updateSubProfile(ctx, userId, firstName, lastName, 'commentLikeFromOther', null, likesCount);
-
-    if (i < ctx.comments.countOfFirstAreTop) {
-      updateSubProfile(ctx, userId, firstName, lastName, 'topComment');
-    } else {
-      updateSubProfile(ctx, userId, firstName, lastName, 'usualComment');
-    }
-  });
-}
-
-async function getComments(ctx, postId) {
-  const { token, groupId, lang } = ctx;
-
-  const commentsData = await vkApi('wall.getComments', {
-    lang,
-    access_token: token,
-    owner_id: -groupId,
-    post_id: postId,
-    need_likes: 1,
-    count: 100,
-    sort: 'asc',
-    preview_length: ctx.comments.ignoreShorterThan * 2,
-    extended: 1,
-  }, 5.84);
-
-  let withRestComments;
-
-  if (commentsData.response.count > 100) {
-    const requests = [];
-
-    for (let i = 1; i < Math.ceil(commentsData.response.count / 100); i += 1) {
-      requests.push(vkApi('wall.getComments', {
-        lang,
-        access_token: token,
-        owner_id: -groupId,
-        post_id: postId,
-        need_likes: 1,
-        count: 100,
-        offset: 100 * i,
-        sort: 'asc',
-        preview_length: ctx.comments.ignoreShorterThan * 2,
-        extended: 1,
-      }, 5.84));
-    }
-
-    withRestComments = await Promise.all(requests);
-
-    withRestComments.unshift(commentsData);
-  }
-
-  if (withRestComments) {
-    withRestComments.forEach((commentsListItem) => {
-      countComments(ctx, commentsListItem);
-    });
-  } else {
-    countComments(ctx, commentsData);
-  }
-}
-
-function searchInList(list, query) {
-  if (!query) throw new Error('No search query Object specified!');
-  return list.filter(sub => Object.keys(sub).some(key => sub[key] === query[key]));
-}
-
 class VkSubsActivity {
   constructor(settings = {}) {
     const defaultSettingsConstructor = {
@@ -289,10 +32,262 @@ class VkSubsActivity {
     this.likes = Object.assign({}, defaultSettingsConstructor.likes, settings.likes);
     this.comments = Object.assign({}, defaultSettingsConstructor.comments, settings.comments);
 
-    this.autoUpdateTimerId = null;
+    this._autoUpdateTimerId = null;
 
-    this.hotSubsStats = {};
-    this.coldSubsStats = {};
+    this._hotSubsStats = {};
+    this._coldSubsStats = [];
+  }
+
+  _updateSubProfile(id, firstName, lastName, event, totalPosts = null, count = 1) {
+    if (!this._hotSubsStats[`${id}`]) {
+      this._hotSubsStats[`${id}`] = {
+        firstName,
+        lastName,
+        usualLikes: 0,
+        topLikes: 0,
+        totalLikes: 0,
+        usualComments: 0,
+        topComments: 0,
+        totalComments: 0,
+        commentsLikesFromOthers: 0,
+        likedAllPosts: false,
+        points: 0,
+        place: 0,
+      };
+    }
+
+    const noAdminLikes = this.adminsIds.includes(id) && this.likes.ignoreAdmins;
+
+    const noAdminComments = this.adminsIds.includes(id) && this.comments.ignoreAdmins;
+
+    switch (event) {
+      case 'usualLike':
+        if (noAdminLikes) return;
+        this._hotSubsStats[`${id}`].usualLikes += count;
+        this._hotSubsStats[`${id}`].totalLikes += count;
+        if (this._hotSubsStats[`${id}`].totalLikes === totalPosts) {
+          this._hotSubsStats[`${id}`].likedAllPosts = true;
+          this._hotSubsStats[`${id}`].points += this.likes.valueOfLikedAllPosts;
+        }
+        this._hotSubsStats[`${id}`].points += this.likes.valueOfUsual * count;
+        break;
+
+      case 'topLike':
+        if (noAdminLikes) return;
+        this._hotSubsStats[`${id}`].topLikes += count;
+        this._hotSubsStats[`${id}`].totalLikes += count;
+        if (this._hotSubsStats[`${id}`].totalLikes === totalPosts) {
+          this._hotSubsStats[`${id}`].likedAllPosts = true;
+          this._hotSubsStats[`${id}`].points += this.likes.valueOfLikedAllPosts;
+        }
+        this._hotSubsStats[`${id}`].points += this.likes.valueOfTop * count;
+        break;
+
+      case 'usualComment':
+        if (noAdminComments) return;
+        this._hotSubsStats[`${id}`].usualComments += count;
+        this._hotSubsStats[`${id}`].totalComments += count;
+        this._hotSubsStats[`${id}`].points += this.comments.valueOfUsual * count;
+        break;
+
+      case 'topComment':
+        if (noAdminComments) return;
+        this._hotSubsStats[`${id}`].topComments += count;
+        this._hotSubsStats[`${id}`].totalComments += count;
+        this._hotSubsStats[`${id}`].points += this.comments.valueOfTop * count;
+        break;
+
+      case 'commentLikeFromOther':
+        if (noAdminComments) return;
+        this._hotSubsStats[`${id}`].commentsLikesFromOthers += count;
+        this._hotSubsStats[`${id}`].points += this.comments.valueOfLikesFromOthers * count;
+        break;
+
+      default:
+        throw new Error('No sub event specified!');
+    }
+  }
+
+  static _cutPostsInInterval(groupWallArr, fromDate, toDate) {
+    return groupWallArr.filter(post => post.date > fromDate && post.date < toDate);
+  }
+
+  static _findFullNameById(profilesArr, id) {
+    for (let i = 0; i < profilesArr.length; i += 1) {
+      if (profilesArr[i].id === id) {
+        return {
+          firstName: profilesArr[i].first_name,
+          lastName: profilesArr[i].last_name,
+        };
+      }
+    }
+
+    return false;
+  }
+
+  async _getGroupWall(fromDate) {
+    const first100WallItems = await vkApi('wall.get', {
+      lang: this.lang,
+      access_token: this.token,
+      owner_id: -this.groupId,
+      count: 100,
+    });
+
+    const groupWall = [];
+    groupWall.push(first100WallItems);
+
+    let j = 0;
+    while (groupWall[groupWall.length - 1].response.items[groupWall[groupWall.length - 1].response
+      .items.length - 1].date > fromDate) {
+      j += 1;
+
+      const groupWallChunk = await vkApi('wall.get', {
+        lang: this.lang,
+        access_token: this.token,
+        owner_id: -this.groupId,
+        count: 100,
+        offset: 100 * j,
+      });
+
+      groupWall.push(groupWallChunk);
+    }
+
+    const posts = [];
+    groupWall.forEach((item) => {
+      item.response.items.forEach((post) => {
+        posts.push(post);
+      });
+    });
+
+    return posts;
+  }
+
+  async _countLikes(likesData, totalPosts) {
+    likesData.response.items.forEach((likeItem, i) => {
+      if (i < this.likes.countOfFirstAreTop) {
+        this._updateSubProfile(likeItem.id, likeItem.first_name, likeItem.last_name, 'topLike',
+          totalPosts);
+      } else {
+        this._updateSubProfile(likeItem.id, likeItem.first_name, likeItem.last_name, 'usualLike',
+          totalPosts);
+      }
+    });
+  }
+
+  async _getLikes(postId, totalPosts) {
+    const likesData = await vkApi('likes.getList', {
+      lang: this.lang,
+      access_token: this.token,
+      type: 'post',
+      owner_id: -this.groupId,
+      item_id: postId,
+      filter: 'likes',
+      extended: 1,
+      count: 1000,
+    });
+
+    let withRestLikes;
+
+    if (likesData.response.count > 1000) {
+      const requests = [];
+
+      for (let i = 1; i < Math.ceil(likesData.response.count / 1000); i += 1) {
+        requests.push(vkApi('likes.getList', {
+          lang: this.lang,
+          access_token: this.token,
+          type: 'post',
+          owner_id: -this.groupId,
+          item_id: postId,
+          filter: 'likes',
+          extended: 1,
+          count: 1000,
+          offset: 1000 * i,
+        }));
+      }
+
+      withRestLikes = await Promise.all(requests);
+
+      withRestLikes.unshift(likesData);
+    }
+
+    if (withRestLikes) {
+      withRestLikes.forEach((likesListItem) => {
+        this._countLikes(likesListItem, totalPosts);
+      });
+    } else {
+      this._countLikes(likesData, totalPosts);
+    }
+  }
+
+  async _countComments(commentsData) {
+    commentsData.response.items.forEach((commentItem, i) => {
+      if (commentItem.text.length < this.comments.ignoreShorterThan) return;
+
+      const userId = commentItem.from_id;
+      const { firstName, lastName } = VkSubsActivity._findFullNameById(commentsData.response
+        .profiles, userId);
+      const likesCount = commentItem.likes.count;
+
+      this._updateSubProfile(userId, firstName, lastName, 'commentLikeFromOther', null, likesCount);
+
+      if (i < this.comments.countOfFirstAreTop) {
+        this._updateSubProfile(userId, firstName, lastName, 'topComment');
+      } else {
+        this._updateSubProfile(userId, firstName, lastName, 'usualComment');
+      }
+    });
+  }
+
+  async _getComments(postId) {
+    const commentsData = await vkApi('wall.getComments', {
+      lang: this.lang,
+      access_token: this.token,
+      owner_id: -this.groupId,
+      post_id: postId,
+      need_likes: 1,
+      count: 100,
+      sort: 'asc',
+      preview_length: this.comments.ignoreShorterThan * 2,
+      extended: 1,
+    }, 5.84);
+
+    let withRestComments;
+
+    if (commentsData.response.count > 100) {
+      const requests = [];
+
+      for (let i = 1; i < Math.ceil(commentsData.response.count / 100); i += 1) {
+        requests.push(vkApi('wall.getComments', {
+          lang: this.lang,
+          access_token: this.token,
+          owner_id: -this.groupId,
+          post_id: postId,
+          need_likes: 1,
+          count: 100,
+          offset: 100 * i,
+          sort: 'asc',
+          preview_length: this.comments.ignoreShorterThan * 2,
+          extended: 1,
+        }, 5.84));
+      }
+
+      withRestComments = await Promise.all(requests);
+
+      withRestComments.unshift(commentsData);
+    }
+
+    if (withRestComments) {
+      withRestComments.forEach((commentsListItem) => {
+        this._countComments(commentsListItem);
+      });
+    } else {
+      this._countComments(commentsData);
+    }
+  }
+
+  static _searchInList(list, query) {
+    if (!query) throw new Error('No search query Object specified!');
+    return list.filter(sub => Object.keys(sub).some(key => sub[key] === query[key]));
   }
 
   async updateList(settings = {}) {
@@ -303,38 +298,19 @@ class VkSubsActivity {
 
     const { fromDate, toDate } = Object.assign({}, defaultSettingsUpdateList, settings);
 
-    const posts = await getGroupWall(this, fromDate);
+    const posts = await this._getGroupWall(fromDate);
 
-    const groupWallInInterval = cutPostsInInterval(posts, fromDate, toDate);
+    const groupWallInInterval = VkSubsActivity._cutPostsInInterval(posts, fromDate, toDate);
 
     const updateListRequests = [];
     groupWallInInterval.forEach((post) => {
-      updateListRequests.push(getLikes(this, post.id, groupWallInInterval.length));
-      updateListRequests.push(getComments(this, post.id));
+      updateListRequests.push(this._getLikes(post.id, groupWallInInterval.length));
+      updateListRequests.push(this._getComments(post.id));
     });
 
-    return Promise.all(updateListRequests)
-      .then(() => {
-        this.coldSubsStats = { ...this.hotSubsStats };
-      });
-  }
+    await Promise.all(updateListRequests);
 
-  getList(settings = {}) {
-    const defaultSettingsGetList = {
-      count: 0,
-      plain: false,
-      sortBy: 'points',
-      sortDirection: 'desc',
-    };
-
-    const {
-      count,
-      plain,
-      sortBy,
-      sortDirection,
-    } = Object.assign({}, defaultSettingsGetList, settings);
-
-    const list = Object.keys(this.coldSubsStats).map((sub) => {
+    this._coldSubsStats = Object.keys(this._hotSubsStats).map((sub) => {
       const {
         firstName,
         lastName,
@@ -348,7 +324,7 @@ class VkSubsActivity {
         likedAllPosts,
         points,
         place,
-      } = this.coldSubsStats[sub];
+      } = this._hotSubsStats[sub];
 
       return {
         id: +sub,
@@ -367,12 +343,28 @@ class VkSubsActivity {
       };
     });
 
-    list.sort((a, b) => b.points - a.points);
-    list.forEach((item, i) => {
+    this._coldSubsStats.sort((a, b) => b.points - a.points);
+    this._coldSubsStats.forEach((item, i) => {
       item.place = i + 1;
     });
+  }
 
-    const resultList = list.sort((a, b) => {
+  getList(settings = {}) {
+    const defaultSettingsGetList = {
+      count: 0,
+      plain: false,
+      sortBy: 'points',
+      sortDirection: 'desc',
+    };
+
+    const {
+      count,
+      plain,
+      sortBy,
+      sortDirection,
+    } = Object.assign({}, defaultSettingsGetList, settings);
+
+    const resultList = this._coldSubsStats.sort((a, b) => {
       if (a[sortBy] > b[sortBy]) {
         return sortDirection === 'desc' ? -1 : 1;
       }
@@ -382,9 +374,10 @@ class VkSubsActivity {
       }
 
       return 0;
-    }).slice(0, count !== 0 ? count : list.length);
+    }).slice(0, count !== 0 ? count : this._coldSubsStats.length);
 
-    const afterSearch = settings.search ? searchInList(resultList, settings.search) : resultList;
+    const afterSearch = settings.search ? VkSubsActivity._searchInList(resultList, settings.search)
+      : resultList;
 
     if (plain) {
       let plainList = '';
@@ -404,30 +397,22 @@ class VkSubsActivity {
   }
 
   clearList() {
-    this.hotSubsStats = {};
+    this._hotSubsStats = {};
   }
 
   async startAutoUpdate(settings = {}) {
     this.clearList();
     await this.updateList(settings);
 
-    this.autoUpdateTimerId = setInterval(async () => {
+    this._autoUpdateTimerId = setInterval(async () => {
       this.clearList();
       await this.updateList(settings);
     }, settings.interval || 3e5);
   }
 
   stopAutoUpdate() {
-    clearInterval(this.autoUpdateTimerId);
+    clearInterval(this._autoUpdateTimerId);
   }
 }
 
-module.exports = {
-  updateSubProfile,
-  cutPostsInInterval,
-  findFullNameById,
-  countLikes,
-  countComments,
-  searchInList,
-  VkSubsActivity,
-};
+module.exports = VkSubsActivity;
