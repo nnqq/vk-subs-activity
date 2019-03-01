@@ -15,7 +15,7 @@ npm i vk-subs-activity
 Fast start below, continue reading for advanced usage.
 
 ```javascript
-const { VkSubsActivity } = require('vk-subs-activity');
+const VkSubsActivity = require('vk-subs-activity');
 
 const vkSubsActivity = new VkSubsActivity({
   token: process.env.TOKEN, // SERVICE or USER token, NOT group
@@ -145,7 +145,7 @@ search | `object` | undefined (all) | Will return only rating items which match 
 
 Manual update of the rating list. Note that .updateList() will not clear rating list before update
 
-Settings are equal to [.startAutoUpdate(settings)](#startutoupdatesettings), but without `interval` property
+Settings are equal to [.startAutoUpdate(settings)](#startautoupdatesettings), but without `interval` property
 
 #### .clearList()
 
