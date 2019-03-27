@@ -1,4 +1,4 @@
-const { VkSubsActivity } = require('../index');
+const VkSubsActivity = require('../index');
 const vkApi = require('../lib/vkApi');
 
 const vkSubsActivity = new VkSubsActivity({
