@@ -1,6 +1,6 @@
 {
   "name": "vk-subs-activity",
-  "version": "0.1.11",
+  "version": "0.1.12",
   "description": "Count activity of VK group subscribers, sum up and convert to points",
   "main": "index.js",
   "scripts": {
