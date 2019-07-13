@@ -37,7 +37,7 @@ npm test
 ### Methods
 
 * [constructor(settings)](#constructorsettings)
-* [.startAutoUpdate(settings)](#startautoupdatesettings)
+* [.startAutoUpdate(settings, cb)](#startautoupdatesettings-cb)
 * [.stopAutoUpdate()](#stopautoupdate)
 * [.getList(settings)](#getlistsettings)
 * [.updateList(settings)](#updatelistsettings)
@@ -91,9 +91,9 @@ comments.ignoreShorterThan | `number` | 10 | Users who leave short comment, will
 comments.valueOfLikesFromOthers | `number` | 5 | Number of points user receive if someone likes his comment
 comments.ignoreAdmins | `boolean` | true | Admins comments will not affect in rating
 
-#### .startAutoUpdate(settings)
+#### .startAutoUpdate(settings, cb)
 
-Starts rating auto update in selected interval. Clears rating list before each iteration to prevent double data rewriting
+Starts rating auto update in selected interval. Clears rating list before each iteration to prevent double data rewriting. Optionally, you can pass a function as second argument, and it will executes every time when subs-activity-list is updated 
 
 ##### Default config
 
@@ -102,7 +102,7 @@ Starts rating auto update in selected interval. Clears rating list before each i
   fromDate: Math.floor(Date.now() / 1000 - 604800),
   toDate: Math.floor(Date.now() / 1000),
   interval: 300000,
-});
+}, Promise.resolve);
 ```
 
 ##### Properties description
@@ -145,7 +145,7 @@ search | `object` | undefined (all) | Will return only rating items which match 
 
 Manual update of the rating list. Note that .updateList() will not clear rating list before update
 
-Settings are equal to [.startAutoUpdate(settings)](#startautoupdatesettings), but without `interval` property
+Settings are equal to [.startAutoUpdate(settings, cb)](#startautoupdatesettings-cb), but without `interval` property
 
 #### .clearList()
 

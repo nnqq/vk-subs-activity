@@ -162,7 +162,7 @@ class VkSubsActivity {
     return posts;
   }
 
-  async _countLikes(likesData, totalPosts) {
+  _countLikes(likesData, totalPosts) {
     likesData.response.items.forEach((likeItem, i) => {
       if (i < this.likes.countOfFirstAreTop) {
         this._updateSubProfile(likeItem.id, likeItem.first_name, likeItem.last_name, 'topLike',
@@ -219,7 +219,7 @@ class VkSubsActivity {
     }
   }
 
-  async _countComments(commentsData) {
+  _countComments(commentsData) {
     commentsData.response.items.forEach((commentItem, i) => {
       if (commentItem.text.length < this.comments.ignoreShorterThan) return;
 
@@ -400,13 +400,15 @@ class VkSubsActivity {
     this._hotSubsStats = {};
   }
 
-  async startAutoUpdate(settings = {}) {
+  async startAutoUpdate(settings = {}, cb = Promise.resolve) {
     this.clearList();
     await this.updateList(settings);
+    cb();
 
     this._autoUpdateTimerId = setInterval(async () => {
       this.clearList();
       await this.updateList(settings);
+      cb();
     }, settings.interval || 3e5);
   }
 
