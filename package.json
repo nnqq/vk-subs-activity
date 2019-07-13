@@ -1,11 +1,12 @@
 {
   "name": "vk-subs-activity",
-  "version": "0.1.12",
+  "version": "0.1.13",
   "description": "Count activity of VK group subscribers, sum up and convert to points",
   "main": "index.js",
   "scripts": {
     "test": "mocha",
-    "eslint": "eslint . --fix --ignore-pattern node_modules/"
+    "eslint": "eslint . --fix --ignore-pattern node_modules/",
+    "pub": "npm test && npm run eslint && npm publish"
   },
   "repository": {
     "type": "git",
