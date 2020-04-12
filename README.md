@@ -154,3 +154,7 @@ Clears rating list
 ### License
 
 MIT
+
+## Contact author
+
+[Telegram](https://t.me/aveDenis)
